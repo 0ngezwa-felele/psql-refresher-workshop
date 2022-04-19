@@ -6,7 +6,8 @@ require('dotenv').config()
 
 describe('As part of the sql refresh workshop', () => {
 	
-	const DATABASE_URL = process.env.DATABASE_URL;
+	const DATABASE_URL = process.env.DATABASE_URL || 'postgres//gary:gar123@localhost:4567/garment_app'
+	
 
 	const pgp = PgPromise({});
 	const db = pgp(DATABASE_URL);
@@ -22,13 +23,15 @@ describe('As part of the sql refresh workshop', () => {
 		// use db.one
 
 		// no changes below this line in this function
+		// db.one
+		const result = await db.one('select count(*) from garment')
 		assert.ok(result.count);
 	});
 
-	it('there should be 11 garments in the garment table - added using the supplied script', async () => {
+	it('there should be 30 garments in the garment table - added using the supplied script', async () => {
 
 		// use db.one as 1 result us expected
-
+		const result = await db.one('select count(*) from garment')
 		// no changes below this line in this function
 
 		assert.equal(30, result.count);
@@ -36,21 +39,21 @@ describe('As part of the sql refresh workshop', () => {
 
 	it('you should be able to find all the Summer garments', async () => {
 		// add some code below
-
+		const result = await db.one(`select count(*) from garment where season = 'Summer'`)
 		// no changes below this line in this function
 		assert.equal(12, result.count);
 	});
 
 	it('you should be able to find all the Winter garments', async () => {
 		// add some code below
-
+		const result = await db.one(`select count(*) from garment where season = 'Winter'`)
 		// no changes below this line in this function
 		assert.equal(5, result.count);
 	});
 
 	it('you should be able to find all the Winter Male garments', async () => {
 		// change the code statement below
-
+		const result = await db.one(`select count(*),gender from garment where season = 'Winter' and gender = 'Male' group by gender`)
 		// no changes below this line in this function
 		assert.equal(3, result.count);
 	});
@@ -58,7 +61,7 @@ describe('As part of the sql refresh workshop', () => {
 	it('you should be able to change a given Male garment to a Unisex garment', async () => {
 
 		// use db.one with an update sql statement
-
+		await db.none(`update garment set gender = 'Unisex' where description = 'Red hooded jacket'`)
 		// write your code above this line
 		
 		const gender_sql = 'select gender from garment where description = $1'
@@ -70,7 +73,11 @@ describe('As part of the sql refresh workshop', () => {
 	it('you should be able to add 2 Male & 3 Female garments', async () => {
 
 		// use db.none - change code below here...
-
+		await db.none(`insert into garment(description, img, season, gender, price) values ('Red Jersey', 'sweater-128x128-455131.png', 'Winter', 'Male', '599.99')`)
+		await db.none(`insert into garment(description, img, season, gender, price) values ('Blue Bomber', 'mens-128x128-455133.png', 'All Seasons', 'Male', '699.99')`)
+		await db.none(`insert into garment(description, img, season, gender, price) values ('Orange Dress', 'tunic-128x128-455137.png', 'Summer', 'Female', '399.99')`)
+		await db.none(`insert into garment(description, img, season, gender, price) values ('Vest', 'tank-128x128-455134.png', 'Summer', 'Female', '29.99')`)
+		await db.none(`insert into garment(description, img, season, gender, price) values ('Short Skirt(Lime)', 'skirt-128x128-455130.png', 'Summer', 'Female', '199.99')`)
 
 		// write your code above this line
 
@@ -86,21 +93,23 @@ describe('As part of the sql refresh workshop', () => {
 	it('you should be group garments by gender and count them', async () => {
 
 		// and below this line for this function will
-
+const garmentsGrouped = await db.many(`select count(*),gender from garment group by gender`)
 		// write your code above this line
 
 		const expectedResult = [
-			  {
-			    count: '15',
-			    gender: 'Male'
+			{
+			    count: '4',
+			    gender: 'Unisex'
 			  },
+
 			  {
 			    count: '16',
 			    gender: 'Female'
 			  },
+
 			  {
-			    count: '4',
-			    gender: 'Unisex'
+			    count: '15',
+			    gender: 'Male'
 			  }
 			]
 		assert.deepStrictEqual(expectedResult, garmentsGrouped)
@@ -109,7 +118,7 @@ describe('As part of the sql refresh workshop', () => {
 	it('you should be able to remove all the Unisex garments', async () => {
 
 		// and below this line for this function will
-
+		db.none(`delete from garment where gender = 'Unisex'`)
 		// write your code above this line
 
 		const gender_count_sql = 'select count(*) from garment where gender = $1'
